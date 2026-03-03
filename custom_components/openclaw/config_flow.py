@@ -39,6 +39,7 @@ from .const import (
     CONF_GATEWAY_TOKEN,
     CONF_USE_SSL,
     CONF_VERIFY_SSL,
+    CONF_AGENT_ID,
     CONF_CONTEXT_MAX_CHARS,
     CONF_CONTEXT_STRATEGY,
     CONF_ENABLE_TOOL_CALLS,
@@ -52,6 +53,7 @@ from .const import (
     BROWSER_VOICE_LANGUAGES,
     CONTEXT_STRATEGY_CLEAR,
     CONTEXT_STRATEGY_TRUNCATE,
+    DEFAULT_AGENT_ID,
     DEFAULT_GATEWAY_HOST,
     DEFAULT_GATEWAY_PORT,
     DEFAULT_CONTEXT_MAX_CHARS,
@@ -453,6 +455,10 @@ class OpenClawOptionsFlow(OptionsFlow):
         selected_provider = options.get(CONF_VOICE_PROVIDER, DEFAULT_VOICE_PROVIDER)
 
         schema: dict[Any, Any] = {
+            vol.Optional(
+                CONF_AGENT_ID,
+                default=options.get(CONF_AGENT_ID, DEFAULT_AGENT_ID),
+            ): str,
             vol.Optional(
                 CONF_INCLUDE_EXPOSED_CONTEXT,
                 default=options.get(
