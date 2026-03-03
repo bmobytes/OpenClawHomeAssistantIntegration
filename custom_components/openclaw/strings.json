@@ -37,6 +37,7 @@
         "title": "OpenClaw Options",
         "description": "Configure context and tool-calling behavior.",
         "data": {
+          "agent_name": "Agent name (e.g. wish, peppermint-butler)",
           "include_exposed_context": "Include exposed entities context",
           "context_max_chars": "Max context characters",
           "context_strategy": "When context exceeds max",

@@ -49,6 +49,7 @@ from .const import (
     CONF_BROWSER_VOICE_LANGUAGE,
     CONF_VOICE_PROVIDER,
     CONF_THINKING_TIMEOUT,
+    CONF_AGENT_NAME,
     BROWSER_VOICE_LANGUAGES,
     CONTEXT_STRATEGY_CLEAR,
     CONTEXT_STRATEGY_TRUNCATE,
@@ -64,6 +65,7 @@ from .const import (
     DEFAULT_BROWSER_VOICE_LANGUAGE,
     DEFAULT_VOICE_PROVIDER,
     DEFAULT_THINKING_TIMEOUT,
+    DEFAULT_AGENT_NAME,
     DOMAIN,
     OPENCLAW_CONFIG_REL_PATH,
 )
@@ -453,6 +455,13 @@ class OpenClawOptionsFlow(OptionsFlow):
         selected_provider = options.get(CONF_VOICE_PROVIDER, DEFAULT_VOICE_PROVIDER)
 
         schema: dict[Any, Any] = {
+            vol.Optional(
+                CONF_AGENT_NAME,
+                default=options.get(
+                    CONF_AGENT_NAME,
+                    DEFAULT_AGENT_NAME,
+                ),
+            ): str,
             vol.Optional(
                 CONF_INCLUDE_EXPOSED_CONTEXT,
                 default=options.get(
