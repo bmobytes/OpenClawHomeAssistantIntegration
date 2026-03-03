@@ -38,7 +38,7 @@
         "title": "OpenClaw Options",
         "description": "Configure context and tool-calling behavior.",
         "data": {
-          "agent_id": "Agent ID (e.g. main)",
+          "agent_id": "Agent ID (e.g. main — leave empty for default)",
           "include_exposed_context": "Include exposed entities context",
           "context_max_chars": "Max context characters",
           "context_strategy": "When context exceeds max",

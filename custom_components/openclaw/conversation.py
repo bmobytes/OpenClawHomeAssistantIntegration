@@ -22,9 +22,11 @@ from .const import (
     ATTR_MODEL,
     ATTR_SESSION_ID,
     ATTR_TIMESTAMP,
+    CONF_AGENT_ID,
     CONF_CONTEXT_MAX_CHARS,
     CONF_CONTEXT_STRATEGY,
     CONF_INCLUDE_EXPOSED_CONTEXT,
+    DEFAULT_AGENT_ID,
     DEFAULT_CONTEXT_MAX_CHARS,
     DEFAULT_CONTEXT_STRATEGY,
     DEFAULT_INCLUDE_EXPOSED_CONTEXT,
@@ -116,6 +118,8 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         )
         max_chars = int(options.get(CONF_CONTEXT_MAX_CHARS, DEFAULT_CONTEXT_MAX_CHARS))
         strategy = options.get(CONF_CONTEXT_STRATEGY, DEFAULT_CONTEXT_STRATEGY)
+        agent_id = options.get(CONF_AGENT_ID, DEFAULT_AGENT_ID).strip()
+        model = f"openclaw:{agent_id}" if agent_id else None
 
         raw_context = (
             build_exposed_entities_context(
@@ -137,6 +141,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
                 message,
                 conversation_id,
                 system_prompt,
+                model=model,
             )
         except OpenClawApiError as err:
             _LOGGER.error("OpenClaw conversation error: %s", err)
@@ -152,6 +157,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
                             message,
                             conversation_id,
                             system_prompt,
+                            model=model,
                         )
                     except OpenClawApiError as retry_err:
                         return self._error_result(
@@ -211,6 +217,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         message: str,
         conversation_id: str,
         system_prompt: str | None = None,
+        model: str | None = None,
     ) -> str:
         """Get a response from OpenClaw, trying streaming first."""
         # Try streaming (lower TTFB for voice pipeline)
@@ -219,6 +226,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             message=message,
             session_id=conversation_id,
             system_prompt=system_prompt,
+            model=model,
         ):
             full_response += chunk
 
@@ -230,6 +238,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             message=message,
             session_id=conversation_id,
             system_prompt=system_prompt,
+            model=model,
         )
         extracted = self._extract_text_recursive(response)
         return extracted or ""
