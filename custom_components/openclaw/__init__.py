@@ -175,6 +175,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: OpenClawConfigEntry) -> 
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
+    # Reload the integration when options change so the API client is
+    # recreated with the updated agent_id (and any other option changes).
+    entry.async_on_unload(entry.add_update_listener(_async_reload_on_options_change))
+
     # Register services (once, idempotent)
     _async_register_services(hass)
     _async_register_websocket_api(hass)
@@ -187,6 +191,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: OpenClawConfigEntry) -> 
         _async_setup_token_refresh(hass, entry, client, addon_config_path)
 
     return True
+
+
+async def _async_reload_on_options_change(
+    hass: HomeAssistant, entry: OpenClawConfigEntry
+) -> None:
+    """Reload the integration when options are updated.
+
+    This ensures the API client is recreated with the latest agent_id and
+    any other changed options (e.g. SSL settings) take full effect.
+    """
+    _LOGGER.info(
+        "Options changed — reloading OpenClaw integration to apply new settings "
+        "(agent_id=%r)",
+        entry.options.get(CONF_AGENT_ID, DEFAULT_AGENT_ID),
+    )
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: OpenClawConfigEntry) -> bool:

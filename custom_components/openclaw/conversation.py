@@ -128,7 +128,13 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         )
         max_chars = int(options.get(CONF_CONTEXT_MAX_CHARS, DEFAULT_CONTEXT_MAX_CHARS))
         strategy = options.get(CONF_CONTEXT_STRATEGY, DEFAULT_CONTEXT_STRATEGY)
-        agent_id = options.get(CONF_AGENT_ID, DEFAULT_AGENT_ID).strip()
+        # Fall back to entry.data if agent_id is not in options (e.g. set during
+        # initial manual setup), then to the hardcoded default.  This mirrors
+        # the lookup order used in __init__.async_setup_entry.
+        agent_id = options.get(
+            CONF_AGENT_ID,
+            self.entry.data.get(CONF_AGENT_ID, DEFAULT_AGENT_ID),
+        ).strip()
         model = f"openclaw:{agent_id}" if agent_id else None
 
         _LOGGER.info(
@@ -165,6 +171,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
                 conversation_id,
                 system_prompt,
                 model=model,
+                agent_id=agent_id,
             )
         except OpenClawApiError as err:
             _LOGGER.error("OpenClaw conversation error: %s", err)
@@ -181,6 +188,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
                             conversation_id,
                             system_prompt,
                             model=model,
+                            agent_id=agent_id,
                         )
                     except OpenClawApiError as retry_err:
                         return self._error_result(
@@ -241,17 +249,20 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         conversation_id: str,
         system_prompt: str | None = None,
         model: str | None = None,
+        agent_id: str | None = None,
     ) -> str:
         """Get a response from OpenClaw, trying streaming first."""
         _LOGGER.debug(
-            "_get_response — conversation_id=%r, model=%r, has_system_prompt=%s",
+            "_get_response — conversation_id=%r, model=%r, agent_id=%r, has_system_prompt=%s",
             conversation_id,
             model,
+            agent_id,
             system_prompt is not None,
         )
         _LOGGER.info(
-            "Sending to API — model=%r, message_preview=%r",
+            "Sending to API — model=%r, agent_id=%r, message_preview=%r",
             model,
+            agent_id,
             (message[:80] + "…") if len(message) > 80 else message,
         )
 
@@ -262,6 +273,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             session_id=conversation_id,
             system_prompt=system_prompt,
             model=model,
+            agent_id=agent_id,
         ):
             full_response += chunk
 
@@ -280,6 +292,7 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             session_id=conversation_id,
             system_prompt=system_prompt,
             model=model,
+            agent_id=agent_id,
         )
         _LOGGER.debug(
             "_get_response — non-streaming raw response keys: %s",
