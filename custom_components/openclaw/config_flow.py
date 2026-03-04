@@ -297,7 +297,7 @@ class OpenClawConfigFlow(ConfigFlow, domain=DOMAIN):
     @staticmethod
     def async_get_options_flow(config_entry: ConfigEntry) -> OpenClawOptionsFlow:
         """Get options flow for this handler."""
-        return OpenClawOptionsFlow(config_entry)
+        return OpenClawOptionsFlow()
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -440,10 +440,6 @@ class OpenClawConfigFlow(ConfigFlow, domain=DOMAIN):
 class OpenClawOptionsFlow(OptionsFlow):
     """Handle OpenClaw options."""
 
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self._config_entry = config_entry
-
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
@@ -451,7 +447,7 @@ class OpenClawOptionsFlow(OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        options = self._config_entry.options
+        options = self.config_entry.options
         selected_provider = options.get(CONF_VOICE_PROVIDER, DEFAULT_VOICE_PROVIDER)
 
         schema: dict[Any, Any] = {
