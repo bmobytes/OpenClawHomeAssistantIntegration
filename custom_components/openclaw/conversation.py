@@ -221,10 +221,18 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         intent_response = intent.IntentResponse(language=user_input.language)
         intent_response.async_set_speech(full_response)
 
-        return conversation.ConversationResult(
-            response=intent_response,
-            conversation_id=conversation_id,
-        )
+        try:
+            return conversation.ConversationResult(
+                response=intent_response,
+                conversation_id=conversation_id,
+                continue_conversation=full_response.endswith("?"),
+            )
+        except TypeError:
+            # Older HA versions don't support continue_conversation
+            return conversation.ConversationResult(
+                response=intent_response,
+                conversation_id=conversation_id,
+            )
 
     def _resolve_conversation_id(self, user_input: conversation.ConversationInput) -> str:
         """Return conversation id from HA or a stable Assist fallback session key."""
@@ -363,7 +371,15 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             intent.IntentResponseErrorCode.UNKNOWN,
             error_message,
         )
-        return conversation.ConversationResult(
-            response=intent_response,
-            conversation_id=user_input.conversation_id,
-        )
+        try:
+            return conversation.ConversationResult(
+                response=intent_response,
+                conversation_id=user_input.conversation_id,
+                continue_conversation=False,
+            )
+        except TypeError:
+            # Older HA versions don't support continue_conversation
+            return conversation.ConversationResult(
+                response=intent_response,
+                conversation_id=user_input.conversation_id,
+            )
