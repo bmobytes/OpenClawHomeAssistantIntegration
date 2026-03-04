@@ -225,11 +225,13 @@ class OpenClawApiClient:
         if model:
             payload["model"] = model
 
-        # Pass session_id as a custom header or param if supported by gateway
         headers = self._headers(agent_id=agent_id)
-        if session_id:
-            headers["X-Session-Id"] = session_id
-            headers["x-openclaw-session-key"] = session_id
+        # Note: do NOT send x-openclaw-session-key or X-Session-Id with a raw
+        # conversation ID — the gateway requires session keys in
+        # "agent:<agentId>:<type>:<id>" format and an incorrect value overrides
+        # model/agent-id routing, defaulting to the first agent.  Let the
+        # gateway derive its own session from the model + x-openclaw-agent-id
+        # headers instead.
 
         session = await self._get_session()
         url = f"{self._base_url}{API_CHAT_COMPLETIONS}"
@@ -315,9 +317,8 @@ class OpenClawApiClient:
             payload["model"] = model
 
         headers = self._headers(agent_id=agent_id)
-        if session_id:
-            headers["X-Session-Id"] = session_id
-            headers["x-openclaw-session-key"] = session_id
+        # Note: do NOT send x-openclaw-session-key or X-Session-Id with a raw
+        # conversation ID — see async_send_message for the full explanation.
 
         session = await self._get_session()
         url = f"{self._base_url}{API_CHAT_COMPLETIONS}"
