@@ -112,6 +112,16 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         conversation_id = self._resolve_conversation_id(user_input)
         assistant_id = "conversation"
         options = self.entry.options
+
+        _LOGGER.debug(
+            "async_process called — entry.options: %s",
+            dict(options),
+        )
+        _LOGGER.debug(
+            "async_process called — entry.data: %s",
+            {k: v for k, v in self.entry.data.items() if "token" not in k.lower()},
+        )
+
         include_context = options.get(
             CONF_INCLUDE_EXPOSED_CONTEXT,
             DEFAULT_INCLUDE_EXPOSED_CONTEXT,
@@ -120,6 +130,19 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         strategy = options.get(CONF_CONTEXT_STRATEGY, DEFAULT_CONTEXT_STRATEGY)
         agent_id = options.get(CONF_AGENT_ID, DEFAULT_AGENT_ID).strip()
         model = f"openclaw:{agent_id}" if agent_id else None
+
+        _LOGGER.info(
+            "Conversation — agent_id=%r (from options), model string=%r",
+            agent_id,
+            model,
+        )
+        if CONF_AGENT_ID not in options:
+            _LOGGER.info(
+                "CONF_AGENT_ID not in entry.options — falling back to DEFAULT_AGENT_ID=%r. "
+                "Check entry.data for agent_id: %r",
+                DEFAULT_AGENT_ID,
+                self.entry.data.get(CONF_AGENT_ID),
+            )
 
         raw_context = (
             build_exposed_entities_context(
@@ -220,6 +243,18 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
         model: str | None = None,
     ) -> str:
         """Get a response from OpenClaw, trying streaming first."""
+        _LOGGER.debug(
+            "_get_response — conversation_id=%r, model=%r, has_system_prompt=%s",
+            conversation_id,
+            model,
+            system_prompt is not None,
+        )
+        _LOGGER.info(
+            "Sending to API — model=%r, message_preview=%r",
+            model,
+            (message[:80] + "…") if len(message) > 80 else message,
+        )
+
         # Try streaming (lower TTFB for voice pipeline)
         full_response = ""
         async for chunk in client.async_stream_message(
@@ -231,7 +266,13 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             full_response += chunk
 
         if full_response:
+            _LOGGER.debug(
+                "_get_response — streaming succeeded, response_length=%d chars",
+                len(full_response),
+            )
             return full_response
+
+        _LOGGER.debug("_get_response — streaming returned empty, falling back to non-streaming")
 
         # Fallback to non-streaming
         response = await client.async_send_message(
@@ -240,6 +281,15 @@ class OpenClawConversationAgent(conversation.AbstractConversationAgent):
             system_prompt=system_prompt,
             model=model,
         )
+        _LOGGER.debug(
+            "_get_response — non-streaming raw response keys: %s",
+            list(response.keys()) if isinstance(response, dict) else type(response).__name__,
+        )
+        if isinstance(response, dict):
+            _LOGGER.info(
+                "_get_response — response model field: %r",
+                response.get("model"),
+            )
         extracted = self._extract_text_recursive(response)
         return extracted or ""
 

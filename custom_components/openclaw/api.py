@@ -234,6 +234,19 @@ class OpenClawApiClient:
         session = await self._get_session()
         url = f"{self._base_url}{API_CHAT_COMPLETIONS}"
 
+        _LOGGER.debug(
+            "async_send_message — url=%s, headers (redacted)=%s",
+            url,
+            {k: (v if "authorization" not in k.lower() else "Bearer ***") for k, v in headers.items()},
+        )
+        _LOGGER.info(
+            "async_send_message — payload model=%r, session_id=%r, message_count=%d",
+            payload.get("model"),
+            payload.get("session_id"),
+            len(payload.get("messages", [])),
+        )
+        _LOGGER.debug("async_send_message — full payload: %s", payload)
+
         try:
             async with session.post(
                 url,
@@ -247,7 +260,17 @@ class OpenClawApiClient:
                 if resp.status >= 400:
                     text = await resp.text()
                     raise OpenClawApiError(f"Chat error {resp.status}: {text[:200]}")
-                return await resp.json()
+                response_data = await resp.json()
+                _LOGGER.debug(
+                    "async_send_message — response status=%d, response keys=%s",
+                    resp.status,
+                    list(response_data.keys()) if isinstance(response_data, dict) else type(response_data).__name__,
+                )
+                _LOGGER.info(
+                    "async_send_message — response model field=%r",
+                    response_data.get("model") if isinstance(response_data, dict) else "N/A",
+                )
+                return response_data
 
         except (aiohttp.ClientConnectorError, aiohttp.ClientOSError, asyncio.TimeoutError) as err:
             raise OpenClawConnectionError(
@@ -299,6 +322,19 @@ class OpenClawApiClient:
         session = await self._get_session()
         url = f"{self._base_url}{API_CHAT_COMPLETIONS}"
 
+        _LOGGER.debug(
+            "async_stream_message — url=%s, headers (redacted)=%s",
+            url,
+            {k: (v if "authorization" not in k.lower() else "Bearer ***") for k, v in headers.items()},
+        )
+        _LOGGER.info(
+            "async_stream_message — payload model=%r, session_id=%r, message_count=%d",
+            payload.get("model"),
+            payload.get("session_id"),
+            len(payload.get("messages", [])),
+        )
+        _LOGGER.debug("async_stream_message — full payload: %s", payload)
+
         try:
             async with session.post(
                 url,
@@ -312,6 +348,11 @@ class OpenClawApiClient:
                 if resp.status >= 400:
                     text = await resp.text()
                     raise OpenClawApiError(f"Chat error {resp.status}: {text[:200]}")
+
+                _LOGGER.debug(
+                    "async_stream_message — SSE stream started, response status=%d",
+                    resp.status,
+                )
 
                 # Parse SSE stream
                 async for line in resp.content:

@@ -448,6 +448,15 @@ class OpenClawOptionsFlow(OptionsFlow):
     ) -> ConfigFlowResult:
         """Manage integration options."""
         if user_input is not None:
+            _LOGGER.debug(
+                "Options flow saving user_input: %s",
+                {k: v for k, v in user_input.items() if "token" not in k.lower()},
+            )
+            _LOGGER.info(
+                "Saving options — agent_id=%r, model will be 'openclaw:%s'",
+                user_input.get(CONF_AGENT_ID),
+                user_input.get(CONF_AGENT_ID, DEFAULT_AGENT_ID).strip(),
+            )
             return self.async_create_entry(title="", data=user_input)
 
         options = self.config_entry.options
