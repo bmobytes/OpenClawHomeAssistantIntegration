@@ -145,11 +145,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: OpenClawConfigEntry) -> 
         entry.data.get(CONF_AGENT_ID, DEFAULT_AGENT_ID),
     )
 
-    # agent_id can come from options (user-changeable) or from initial config data
-    agent_id: str = entry.options.get(
-        CONF_AGENT_ID, entry.data.get(CONF_AGENT_ID, DEFAULT_AGENT_ID)
-    )
-
     client = OpenClawApiClient(
         host=entry.data[CONF_GATEWAY_HOST],
         port=entry.data[CONF_GATEWAY_PORT],
