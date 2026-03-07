@@ -2,6 +2,16 @@
 
 All notable changes to the OpenClaw Home Assistant Integration will be documented in this file.
 
+## [0.1.58] - 2026-03-07
+
+### Added
+- Added configurable OpenClaw `agent_id` support for manual setup, integration options, and per-call `openclaw.send_message` service overrides.
+- Added `x-openclaw-agent-id` routing support in the API client so messages can target non-`main` OpenClaw agents.
+
+### Changed
+- Saving OpenClaw integration options now reloads the integration automatically, so updated `agent_id` and other runtime options apply immediately.
+- Added service descriptions and translations for the new `agent_id` field in the configuration UI.
+
 ## [0.1.57] - 2026-02-26
 
 ### Changed
